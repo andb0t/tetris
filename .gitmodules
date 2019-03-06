@@ -1,0 +1,3 @@
+[submodule "MaTris"]
+	path = MaTris
+	url = git@github.com:Uglemat/MaTris.git
