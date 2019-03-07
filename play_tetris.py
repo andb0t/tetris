@@ -77,7 +77,6 @@ class Autoplay():
             print("- Rotation:", self.tetromino_rotation)
             print("- Position:", self.tetromino_position)
             print("Next tetromino:", self.next_tetromino)
-            print()
             print("-----------------")
             print()
 
