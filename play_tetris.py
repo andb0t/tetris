@@ -83,10 +83,12 @@ class Autoplay():
 
 def play():
     autoplay = Autoplay(verbose=False, graphics=False, speedup=True)
-    print("Start!")
-    matris.start_game(autoplay)
-    print("End!")
-    print("Final score:", autoplay.score)
+    while True:
+        print("Start!")
+        with utils.suppress_stdout_stderr():
+            matris.start_game(autoplay)
+        print("End!")
+        print("Final score:", autoplay.score)
 
 
 if __name__ == "__main__":
