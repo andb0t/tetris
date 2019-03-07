@@ -1,5 +1,6 @@
 """This file plays tetris."""
 import random
+import time
 
 from MaTris import matris, tetrominoes
 
@@ -83,12 +84,17 @@ class Autoplay():
 
 def play():
     autoplay = Autoplay(verbose=False, graphics=False, speedup=True)
-    while True:
-        print("Start!")
-        with utils.suppress_stdout_stderr():
-            matris.start_game(autoplay)
+    print("Start!")
+
+    try:
+        while True:
+            start_time = time.time()
+            with utils.suppress_stdout_stderr():
+                matris.start_game(autoplay)
+            stop_time = time.time()
+            print("Played a tetris game!\tScore: {0}\tTime (s): {1:.3f}".format(autoplay.score, stop_time - start_time))
+    except KeyboardInterrupt:
         print("End!")
-        print("Final score:", autoplay.score)
 
 
 if __name__ == "__main__":
