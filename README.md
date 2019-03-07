@@ -9,3 +9,9 @@ Xvfb :99 &
 export DISPLAY=:99
 python play_tetris.py
 ```
+
+# run normally
+If needed set up xserver by starting Xlaunch. Then
+```bash
+python play_tetris.py
+```
