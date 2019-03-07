@@ -3,15 +3,8 @@
 This is a simple test repo for reinforcement learning.
 
 
-# run headless
-```bash
-Xvfb :99 &
-export DISPLAY=:99
-python play_tetris.py
-```
-
-# run normally
+# run
 If needed set up xserver by starting Xlaunch. Then
 ```bash
-python play_tetris.py
+python play_tetris.py --help
 ```

@@ -9,7 +9,7 @@ name = "pypi"
 pygame = "*"
 keras = "*"
 tensorflow = "*"
-"h5py" = "*"
+psutil = "*"
 
 [requires]
 python_version = "3.6"

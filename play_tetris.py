@@ -7,6 +7,7 @@ import keras
 from keras.models import Sequential
 from keras.models import model_from_json
 from keras.layers import Dense, InputLayer
+import psutil
 
 from MaTris import matris
 
@@ -18,10 +19,19 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--train", help='train the model', action='store_true')
 parser.add_argument("--new", help='overwrite old model', action='store_true')
 parser.add_argument("--verbose", help='verbose output', action='store_true')
+parser.add_argument("--graphics", help='show graphics', action='store_true')
 args = parser.parse_args()
 
 
 def play():
+
+    env_display = os.environ["DISPLAY"]
+    if not args.graphics:
+        print("Disable display ...")
+        os.environ["DISPLAY"] = ":99"
+        if "Xvfb" not in (p.name() for p in psutil.process_iter()):
+            print("Starting Xvfb service on display port :99 ...")
+            os.system("Xvfb :99 &")
 
     if args.train:
         if not args.new and os.path.exists('tetris.model'):
@@ -41,6 +51,7 @@ def play():
 
     print("Start!")
     num_episodes = 10
+    count_episodes = 0
     try:
         for i in range(num_episodes):
             start_time = time.time()
@@ -53,12 +64,17 @@ def play():
             print("{2}. Tetris game finished!\tScore: {0}\tTime (s): {1:.3f}".format(autoplay.score,
                                                                                      stop_time - start_time,
                                                                                      i+1))
+            count_episodes += 1
     except KeyboardInterrupt:
-        print("End!")
+        print("Games finished: %d" % count_episodes)
 
     if args.train:
         model.save('tetris.model')
         print("Saved model to disk")
+
+    if not args.graphics:
+        print("Reset display ...")
+        os.environ["DISPLAY"] = env_display
 
 
 if __name__ == "__main__":

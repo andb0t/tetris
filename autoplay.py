@@ -61,6 +61,11 @@ class Autoplay():
         self.state = state
 
     def train(self):
+        if not self.model:
+            return
+        x_train = self.state
+        y_train = self.model.predict(self.state)
+        self.model.fit(x_train, y_train, epochs=1, verbose=1)
         prediction = self.model.predict(self.state)
         print("This prediction:", prediction)
         print("This prediction:", len(prediction))
