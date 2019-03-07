@@ -10,6 +10,8 @@ pygame = "*"
 keras = "*"
 tensorflow = "*"
 psutil = "*"
+pydot = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.6"

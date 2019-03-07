@@ -1,6 +1,8 @@
 """The class to play the tetris game without intervention."""
 import random
 
+import numpy as np
+
 from MaTris import tetrominoes
 
 import utils
@@ -10,11 +12,12 @@ tetromino_colors = sorted([x[0] for x in tetrominoes.tetrominoes.values()])
 
 
 class Autoplay():
-    def __init__(self, model=None, verbose=False, graphics=True, speedup=False):
+    def __init__(self, model=None, verbose=False, graphics=True, speedup=False, training=False):
         self.verbose = verbose
         self.graphics = graphics
         self.speedup = speedup
         self.model = model
+        self.training = training
         self.k_up = False
         self.k_down = False
         self.k_right = False
@@ -30,6 +33,11 @@ class Autoplay():
         self.score = 0
         self.sorted_keys = None
         self.state = None
+        self.old_state = None
+        self.memory = []
+        self.max_memory = 10
+        self.decision = None
+        self.loss = 0
 
     def record(self, matrix, current_tetromino, next_tetromino, tetromino_rotation, tetromino_position, score):
         self.stepcount += 1
@@ -58,26 +66,55 @@ class Autoplay():
         state.append(utils.index_in_list(self.tetromino_position, self.sorted_keys))
         # insert next tetromino
         state.append(self.next_tetromino)
-        self.state = state
+        self.old_state = self.state
+        self.state = np.array(state).reshape(1, len(state))
+        self.memory.append(self.state)
+        if len(self.memory) > self.max_memory:
+            del self.memory[0]
+
+    def get_batch(self):
+        batch_size = 50
+        discount = 0.9
+        len_memory = len(self.memory)
+        num_actions = self.model.output_shape[-1]
+        env_dim = self.state.shape[1]
+        inputs = np.zeros((min(len_memory, batch_size), env_dim))
+        targets = np.zeros((inputs.shape[0], num_actions))
+        for i in np.random.randint(0, len_memory, size=inputs.shape[0]):
+            inputs[i:i+1] = self.old_state
+            # There should be no target values for actions not taken.
+            # Thou shalt not correct actions not taken #deep
+            new_prediction = self.model.predict(self.state, steps=inputs.shape[0])
+            q_sa = np.max(new_prediction[0])
+            if self.old_state is not None:
+                targets[i] = self.model.predict(self.old_state, steps=inputs.shape[0])[0]
+            else:
+                targets[i] = new_prediction
+            # reward_t + gamma * max_a' Q(s', a')
+            targets[i, self.decision] = self.score + discount * q_sa
+        return inputs, targets
 
     def train(self):
-        if not self.model:
+        if not self.model or not self.training:
             return
-        x_train = self.state
-        y_train = self.model.predict(self.state)
-        self.model.fit(x_train, y_train, epochs=1, verbose=1)
-        prediction = self.model.predict(self.state)
-        print("This prediction:", prediction)
-        print("This prediction:", len(prediction))
+        inputs, targets = self.get_batch()
+        self.loss += self.model.train_on_batch(inputs, targets)[0]
 
     def decide(self):
-        decision = random.randint(0, 4)
-        self.k_up = decision == 0
-        self.k_down = decision == 1
-        self.k_right = decision == 2
-        self.k_left = decision == 3
-        self.k_space = decision == 4
-        self.k_pass = not any([self.k_up, self.k_down, self.k_right, self.k_left, self.k_space])
+        exploration_probability = 0.1
+        # get next action
+        if not self.model or np.random.rand() <= exploration_probability:
+            self.decision = random.randint(0, 5)
+        else:
+            actions = self.model.predict(self.state)
+            self.decision = np.argmax(actions)
+        # apply action to game
+        self.k_up = self.decision == 0
+        self.k_down = self.decision == 1
+        self.k_right = self.decision == 2
+        self.k_left = self.decision == 3
+        self.k_space = self.decision == 4
+        self.k_pass = self.decision == 5
 
     def print(self):
         if self.verbose:
@@ -87,6 +124,8 @@ class Autoplay():
             print("- Score:", self.score)
             print("- State dimension:", len(self.state))
             print("- Occupied matrix fields: %d" % len(matrix_occupied))
+            if self.decision is not None:
+                print("Last decision:", self.decision)
             # print(matrix_occupied)
             print("Current tetromino:", self.current_tetromino)
             print("- Rotation:", self.tetromino_rotation)
