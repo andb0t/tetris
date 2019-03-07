@@ -7,6 +7,9 @@ name = "pypi"
 
 [packages]
 pygame = "*"
+keras = "*"
+tensorflow = "*"
+"h5py" = "*"
 
 [requires]
 python_version = "3.6"
