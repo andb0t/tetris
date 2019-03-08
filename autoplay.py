@@ -91,7 +91,8 @@ class Autoplay():
             else:
                 targets[i] = new_prediction
             # reward_t + gamma * max_a' Q(s', a')
-            targets[i, self.decision] = self.score + discount * q_sa
+            index = targets.shape[1]-1 if not self.decision else min(self.decision, targets.shape[1]-1)
+            targets[i, index] = self.score + discount * q_sa
         return inputs, targets
 
     def train(self):
@@ -101,7 +102,7 @@ class Autoplay():
         self.loss += self.model.train_on_batch(inputs, targets)[0]
 
     def decide(self):
-        exploration_probability = 0.1
+        exploration_probability = 0.3
         # get next action
         if not self.model or np.random.rand() <= exploration_probability:
             self.decision = random.randint(0, 5)
